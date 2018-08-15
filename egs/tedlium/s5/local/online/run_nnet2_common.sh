@@ -14,6 +14,9 @@ set -e
 
 
 if [ $stage -le 1 ]; then
+  echo ##############################
+  echo egs/tedlium/s5/local/online/run_nnet2_common.sh, stage $stage
+
   # Create high-resolution MFCC features (with 40 cepstra instead of 13).
   # this shows how you can split across multiple file-systems.  we'll split the
   # MFCC dir across multiple locations.  You might want to be careful here, if you
@@ -49,6 +52,9 @@ for line in sys.stdin.readlines():
 fi
 
 if [ $stage -le 2 ]; then
+  echo ##############################
+  echo egs/tedlium/s5/local/online/run_nnet2_common.sh, stage $stage
+
   # Train a system just for its LDA+MLLT transform.  We use --num-iters 13
   # because after we get the transform (12th iter is the last), any further
   # training is pointless.
@@ -61,12 +67,18 @@ fi
 
 
 if [ $stage -le 3 ]; then
+  echo ##############################
+  echo egs/tedlium/s5/local/online/run_nnet2_common.sh, stage $stage
+
   mkdir -p exp/nnet2_online
   steps/online/nnet2/train_diag_ubm.sh --cmd "$train_cmd" --nj 30 --num-frames 700000 \
     data/train_hires 512 exp/nnet2_online/tri4 exp/nnet2_online/diag_ubm
 fi
 
 if [ $stage -le 4 ]; then
+  echo ##############################
+  echo egs/tedlium/s5/local/online/run_nnet2_common.sh, stage $stage
+
   # iVector extractors can in general be sensitive to the amount of data, but
   # this one has a fairly small dim (defaults to 100)
   steps/online/nnet2/train_ivector_extractor.sh --cmd "$train_cmd" --nj 10 \
@@ -74,6 +86,9 @@ if [ $stage -le 4 ]; then
 fi
 
 if [ $stage -le 5 ]; then
+  echo ##############################
+  echo egs/tedlium/s5/local/online/run_nnet2_common.sh, stage $stage
+
   ivectordir=exp/nnet2_online/ivectors_train_hires
   if [[ $(hostname -f) == *.clsp.jhu.edu ]] && [ ! -d $ivectordir/storage ]; then
     utils/create_split_dir.pl /export/b0{1,2,3,4}/$USER/kaldi-data/egs/tedlium-$(date +'%m_%d_%H_%M')/s5/$ivectordir/storage $ivectordir/storage

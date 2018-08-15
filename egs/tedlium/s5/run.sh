@@ -27,12 +27,20 @@ decode_nj=8
 
 stage=0
 
+echo ##############################
+echo Starting egs/tedlium/s5/run.sh
+echo Stage: $stage
+
 . utils/parse_options.sh  # accept options.. you can run this run.sh with the
                           # --stage option, for instance, if you don't want to
                           # change it in the script.
 
 # Data preparation
 if [ $stage -le 0 ]; then
+
+  echo ##############################
+  echo egs/tedlium/s5/run.sh, stage $stage
+
   local/download_data.sh || exit 1
 
   local/prepare_data.sh || exit 1
@@ -48,6 +56,10 @@ fi
 
 # Feature extraction
 if [ $stage -le 1 ]; then
+
+  echo ##############################
+  echo egs/tedlium/s5/run.sh, stage $stage
+
   for set in test dev train; do
     dir=data/$set
     steps/make_mfcc.sh --nj 20 --cmd "$train_cmd" $dir $dir/log $dir/data || exit 1
@@ -58,12 +70,18 @@ fi
 # Now we have 118 hours of training data.
 # Let's create a subset with 10k short segments to make flat-start training easier:
 if [ $stage -le 2 ]; then
+  echo ##############################
+  echo egs/tedlium/s5/run.sh, stage $stage
+
   utils/subset_data_dir.sh --shortest data/train 10000 data/train_10kshort || exit 1
   utils/data/remove_dup_utts.sh 10 data/train_10kshort data/train_10kshort_nodup || exit 1
 fi
 
 # Train
 if [ $stage -le 3 ]; then
+  echo ##############################
+  echo egs/tedlium/s5/run.sh, stage $stage
+
   steps/train_mono.sh --nj 20 --cmd "$train_cmd" \
     data/train_10kshort_nodup data/lang_nosp exp/mono0a || exit 1
 
@@ -84,6 +102,9 @@ if [ $stage -le 3 ]; then
 fi
 
 if [ $stage -le 4 ]; then
+  echo ##############################
+  echo egs/tedlium/s5/run.sh, stage $stage
+
   steps/align_si.sh --nj $nj --cmd "$train_cmd" \
     data/train data/lang_nosp exp/tri1 exp/tri1_ali || exit 1
 
@@ -101,6 +122,9 @@ if [ $stage -le 4 ]; then
 fi
 
 if [ $stage -le 5 ]; then
+  echo ##############################
+  echo egs/tedlium/s5/run.sh, stage $stage
+
   steps/get_prons.sh --cmd "$train_cmd" data/train data/lang_nosp exp/tri2
   utils/dict_dir_add_pronprobs.sh --max-normalize true \
     data/local/dict_nosp exp/tri2/pron_counts_nowb.txt \
@@ -124,6 +148,9 @@ if [ $stage -le 5 ]; then
 fi
 
 if [ $stage -le 6 ]; then
+  echo ##############################
+  echo egs/tedlium/s5/run.sh, stage $stage
+
   steps/align_si.sh --nj $nj --cmd "$train_cmd" \
     data/train data/lang exp/tri2 exp/tri2_ali || exit 1
 
@@ -143,6 +170,9 @@ fi
 # steps/cleanup/debug_lexicon.sh --nj 100 --alidir exp/tri3 --cmd "$train_cmd" data/train data/lang exp/tri3 data/local/dict/lexicon.txt exp/tri3_debug_lexicon &
 
 if [ $stage -le 7 ]; then
+  echo ##############################
+  echo egs/tedlium/s5/run.sh, stage $stage
+
   steps/align_fmllr.sh --nj $nj --cmd "$train_cmd" \
     data/train data/lang exp/tri3 exp/tri3_ali || exit 1
 
@@ -163,10 +193,10 @@ if [ $stage -le 7 ]; then
   done
 fi
 # Run the DNN recipe on fMLLR feats:
-local/nnet/run_dnn.sh || exit 1
-for decode_dir in "exp/dnn4_pretrain-dbn_dnn/decode_test" "exp/dnn4_pretrain-dbn_dnn_smbr_i1lats/decode_test_it4"; do
-  steps/lmrescore_const_arpa.sh data/lang_test data/lang_rescore data/test $decode_dir $decode_dir.rescore
-done
+#local/nnet/run_dnn.sh || exit 1
+#for decode_dir in "exp/dnn4_pretrain-dbn_dnn/decode_test" "exp/dnn4_pretrain-dbn_dnn_smbr_i1lats/decode_test_it4"; do
+#  steps/lmrescore_const_arpa.sh data/lang_test data/lang_rescore data/test $decode_dir $decode_dir.rescore
+#done
 # DNN recipe with bottle-neck features
 #local/nnet/run_dnn_bn.sh
 # Rescore with 4-gram LM:
@@ -174,7 +204,10 @@ done
 #steps/lmrescore_const_arpa.sh data/lang_test data/lang_rescore data/test $decode_dir $decode_dir.rescore || exit 1
 
 ## Run the nnet2 multisplice recipe
-# local/online/run_nnet2_ms.sh || exit 1;
+echo ##############################
+echo Finished monophone and triphone training
+echo Running local/online/run_nnet2_ms.sh
+local/online/run_nnet2_ms.sh || exit 1;
 ## Run discriminative training on the top of multisplice recipe
 # local/online/run_nnet2_ms_disc.sh || exit 1;
 

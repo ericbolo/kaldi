@@ -48,6 +48,12 @@ local/online/run_nnet2_common.sh --stage $stage
 
 
 if [ $stage -le 7 ]; then
+  echo ##############################
+  echo END OF COMPUTE-INTENSIVE TASKS, exiting. Run the remaining code in a GPU instance, changing the stage to 7.
+  echo exiting
+  exit 0
+  echo egs/tedlium/s5/local/online/run_nnet2_ms.sh, stage $stage
+
   if [[ $(hostname -f) == *.clsp.jhu.edu ]] && [ ! -d $dir/egs/storage ]; then
     utils/create_split_dir.pl \
      /export/b0{3,4,5,6}/$USER/kaldi-data/egs/tedlium-$(date +'%m_%d_%H_%M')/s5/$dir/egs/storage $dir/egs/storage
@@ -75,6 +81,11 @@ if [ $stage -le 7 ]; then
 fi
 
 if [ $stage -le 8 ]; then
+  echo ##############################
+  echo DONE training. Acoustic model and ivector_extractor should be functional
+  echo Next: decoding...
+  echo egs/tedlium/s5/local/online/run_nnet2_ms.sh, stage $stage
+
   # dump iVectors for the testing data.
   for decode_set in dev test; do
       num_jobs=`cat data/${decode_set}_hires/utt2spk|cut -d' ' -f2|sort -u|wc -l`
@@ -84,6 +95,8 @@ if [ $stage -le 8 ]; then
 fi
 
 if [ $stage -le 9 ]; then
+  echo ##############################
+  echo egs/tedlium/s5/local/online/run_nnet2_ms.sh, stage $stage
   # this does offline decoding that should give about the same results as the
   # real online decoding (the one with --per-utt true)
   for decode_set in dev test; do
@@ -98,6 +111,9 @@ fi
 
 
 if [ $stage -le 10 ]; then
+  echo ##############################
+  echo egs/tedlium/s5/local/online/run_nnet2_ms.sh, stage $stage
+
   # If this setup used PLP features, we'd have to give the option --feature-type plp
   # to the script below.
   steps/online/nnet2/prepare_online_decoding.sh --mfcc-config conf/mfcc_hires.conf \
@@ -106,6 +122,9 @@ fi
 wait;
 
 if [ $stage -le 11 ]; then
+  echo ##############################
+  echo egs/tedlium/s5/local/online/run_nnet2_ms.sh, stage $stage
+
   # do the actual online decoding with iVectors, carrying info forward from
   # previous utterances of the same speaker.
   for decode_set in dev test; do
@@ -118,6 +137,9 @@ if [ $stage -le 11 ]; then
 fi
 
 if [ $stage -le 12 ]; then
+  echo ##############################
+  echo egs/tedlium/s5/local/online/run_nnet2_ms.sh, stage $stage
+
   # this version of the decoding treats each utterance separately
   # without carrying forward speaker information.
   for decode_set in dev test; do
@@ -130,6 +152,9 @@ if [ $stage -le 12 ]; then
 fi
 
 if [ $stage -le 13 ]; then
+  echo ##############################
+  echo egs/tedlium/s5/local/online/run_nnet2_ms.sh, stage $stage
+
   # this version of the decoding treats each utterance separately
   # without carrying forward speaker information, but looks to the end
   # of the utterance while computing the iVector (--online false)
