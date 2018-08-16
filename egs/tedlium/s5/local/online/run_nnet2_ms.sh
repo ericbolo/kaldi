@@ -44,15 +44,15 @@ else
 fi
 
 # do the common parts of the script.
-local/online/run_nnet2_common.sh --stage $stage
+
+# BV note: commenting this out because we've already done this.
+#local/online/run_nnet2_common.sh --stage $stage
 
 
 if [ $stage -le 7 ]; then
-  echo ##############################
-  echo END OF COMPUTE-INTENSIVE TASKS, exiting. Run the remaining code in a GPU instance, changing the stage to 7.
-  echo exiting
-  exit 0
-  echo egs/tedlium/s5/local/online/run_nnet2_ms.sh, stage $stage
+  echo "##############################"
+  echo START OF GPU TRAINING
+  echo egs/tedlium/s5/local/online/run_nnet2_ms.sh, stage 7
 
   if [[ $(hostname -f) == *.clsp.jhu.edu ]] && [ ! -d $dir/egs/storage ]; then
     utils/create_split_dir.pl \
@@ -62,6 +62,15 @@ if [ $stage -le 7 ]; then
   # The size of the system is kept rather small
   # this is because we want it to be small enough that we could plausibly run it
   # in real-time.
+
+  #BV note:
+  #we are running this on a 8-GPU machine
+  #using default parallelization options of train_multisplice_accel2.sh,
+  #i.e. num-init-jobs=1, num-final-jobs=8
+  #this means only 1 GPU will be active at the beginning
+  #and 8 GPUs active towards the end
+  # Note: make sure nvidia runs in exclusive compute mode
+  #with this command: nvidia-smi -c 1
   steps/nnet2/train_multisplice_accel2.sh --stage $train_stage \
     --num-epochs 8 --num-jobs-initial 3 --num-jobs-final 18 \
     --num-hidden-layers 6 --splice-indexes "layer0/-2:-1:0:1:2 layer1/-1:2 layer3/-3:3 layer4/-7:2" \

@@ -25,7 +25,8 @@
 nj=40
 decode_nj=8
 
-stage=0
+# BV note: setting stage to 8 because we've already run the compute-intensive tasks
+stage=8
 
 echo ##############################
 echo Starting egs/tedlium/s5/run.sh
